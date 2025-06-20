@@ -40,12 +40,67 @@ export const useTransactions = () => {
     saveTransactions(updatedTransactions);
   };
 
+  const mergeTransactions = (importedTransactions: Transaction[]) => {
+    // Add metadata to imported transactions if missing
+    const transactionsWithMetadata = importedTransactions.map(transaction => {
+      // If the transaction already has an ID, keep it, otherwise generate a new one
+      const id = transaction.id || generateId();
+      const now = new Date();
+      
+      return {
+        ...transaction,
+        id,
+        // If createdAt/updatedAt are missing, add them
+        createdAt: transaction.createdAt || now,
+        updatedAt: transaction.updatedAt || now,
+      };
+    });
+    
+    // Create a map of existing transactions by date for quick lookup
+    const existingByDate = new Map<string, Transaction[]>();
+    transactions.forEach(transaction => {
+      if (!existingByDate.has(transaction.date)) {
+        existingByDate.set(transaction.date, []);
+      }
+      existingByDate.get(transaction.date)?.push(transaction);
+    });
+    
+    // Filter out imported transactions that are exact duplicates
+    const filteredImports = transactionsWithMetadata.filter(imported => {
+      const existingForDate = existingByDate.get(imported.date) || [];
+      
+      // Check if there's an exact match for all values (except id, createdAt, updatedAt)
+      return !existingForDate.some(existing => 
+        existing.cashAmount === imported.cashAmount &&
+        existing.onlineReceived === imported.onlineReceived &&
+        existing.vendorAmount === imported.vendorAmount &&
+        existing.expenses === imported.expenses &&
+        existing.rahulAmount === imported.rahulAmount &&
+        existing.sagarAmount === imported.sagarAmount &&
+        existing.usedCash === imported.usedCash &&
+        existing.onlineUsed === imported.onlineUsed
+      );
+    });
+    
+    // Combine with existing transactions
+    const updatedTransactions = [...transactions, ...filteredImports];
+    
+    // Sort by date (newest first)
+    updatedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    setTransactions(updatedTransactions);
+    saveTransactions(updatedTransactions);
+    
+    return filteredImports.length;
+  };
+
   return {
     transactions,
     isLoading,
     addTransaction,
     updateTransaction,
     deleteTransaction,
+    mergeTransactions,
   };
 };
 

@@ -22,6 +22,7 @@ const HistoryPage: React.FC = () => {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const filteredTransactions = useFilteredTransactions(transactions, dateFilter, sortConfig);
 
@@ -45,20 +46,25 @@ const HistoryPage: React.FC = () => {
 
   const handleFormSubmit = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingTransaction) {
-      updateTransaction(editingTransaction.id, transactionData);
+      setIsLoading(true);
+      // Simulate loading for better UX
+      setTimeout(() => {
+        updateTransaction(editingTransaction.id, transactionData);
+        setIsLoading(false);
+        setIsFormOpen(false);
+        setEditingTransaction(undefined);
+      }, 500);
     }
-    setIsFormOpen(false);
-    setEditingTransaction(undefined);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+    <div className="space-y-4 animate-fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 transition-colors duration-200">
         <div className="flex items-center gap-3 mb-4 sm:mb-6">
-          <History className="text-blue-600 hidden sm:block" size={24} />
+          <History className="text-blue-600 dark:text-blue-400 hidden sm:block transition-colors duration-200" size={24} />
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Transaction History</h1>
-            <p className="text-sm text-gray-600">View and manage all your business transactions</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-200">Transaction History</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-200">View and manage all your business transactions</p>
           </div>
         </div>
 
@@ -68,7 +74,7 @@ const HistoryPage: React.FC = () => {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 transition-colors duration-200">
         <TransactionTable
           transactions={filteredTransactions}
           sortConfig={sortConfig}
@@ -76,6 +82,7 @@ const HistoryPage: React.FC = () => {
           onEdit={handleEditTransaction}
           onDelete={handleDeleteTransaction}
           onAddNew={() => {}} // Disabled in history view
+          isLoading={isLoading}
         />
       </div>
 

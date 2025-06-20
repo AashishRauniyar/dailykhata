@@ -67,22 +67,22 @@ const DateFilterComponent: React.FC<DateFilterProps> = ({ dateFilter, onDateFilt
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4 mb-4 sm:mb-6 transition-colors duration-200 animate-fade-in">
       <div className="flex items-center gap-2 mb-3 sm:mb-4">
-        <Calendar className="text-blue-600" size={20} />
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800">Date Filter</h3>
+        <Calendar className="text-blue-600 dark:text-blue-400" size={20} />
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white transition-colors duration-200">Date Filter</h3>
       </div>
       
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:items-center">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 animate-fade-in">
           {(['today', 'this-week', 'this-month', 'this-year'] as const).map((preset) => (
             <button
               key={preset}
               onClick={() => handlePresetChange(preset)}
               className={`px-2 sm:px-3 py-1 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 dateFilter.preset === preset
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-600 dark:bg-blue-700 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {preset.charAt(0).toUpperCase() + preset.slice(1).replace('-', ' ')}
@@ -90,23 +90,23 @@ const DateFilterComponent: React.FC<DateFilterProps> = ({ dateFilter, onDateFilt
           ))}
         </div>
         
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 animate-fade-in">
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">From:</span>
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap transition-colors duration-200">From:</span>
             <input
               type="date"
               value={dateFilter.startDate}
               onChange={(e) => handleDateChange('startDate', e.target.value)}
-              className="px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors duration-200"
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">To:</span>
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap transition-colors duration-200">To:</span>
             <input
               type="date"
               value={dateFilter.endDate}
               onChange={(e) => handleDateChange('endDate', e.target.value)}
-              className="px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors duration-200"
             />
           </div>
         </div>
