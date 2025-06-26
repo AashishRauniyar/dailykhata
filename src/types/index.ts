@@ -9,8 +9,14 @@ export interface Transaction {
   sagarAmount: number;
   usedCash: number;
   onlineUsed: number;
+  businessType: 'COSMETIC' | 'CLOTHING';
+  userId: string;
   createdAt: Date;
   updatedAt: Date;
+  user?: {
+    username: string;
+    businessType: 'COSMETIC' | 'CLOTHING';
+  };
 }
 
 export interface FinancialSummary {
@@ -35,4 +41,35 @@ export interface DateFilter {
 export interface SortConfig {
   field: keyof Transaction;
   direction: 'asc' | 'desc';
+}
+
+export interface User {
+  id: string;
+  username: string;
+  businessType: 'COSMETIC' | 'CLOTHING';
+  role: 'ADMIN' | 'USER';
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => void;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegisterData {
+  username: string;
+  password: string;
+  businessType: 'COSMETIC' | 'CLOTHING';
+  role?: 'ADMIN' | 'USER';
 }

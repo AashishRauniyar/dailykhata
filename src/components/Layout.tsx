@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Plus, BarChart3, Calendar, Settings, Menu, X, Moon, Sun } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { BookOpen, Plus, BarChart3, Calendar, Settings, Menu, X, Moon, Sun, LogOut, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
@@ -28,6 +31,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setDarkMode(!darkMode);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getBusinessDisplayName = () => {
+    if (!user) return 'Financial Tracker';
+    return user.businessType === 'COSMETIC' ? '🧴 Cosmetic Business' : '👕 Clothing Business';
+  };
+
+  const getBusinessColor = () => {
+    if (!user) return 'text-red-600 dark:text-red-400';
+    return user.businessType === 'COSMETIC' 
+      ? 'text-green-600 dark:text-green-400' 
+      : 'text-purple-600 dark:text-purple-400';
+  };
+
   const navigation = [
     { name: 'Daily Khata', href: '/', icon: Plus, current: location.pathname === '/' },
     { name: 'Reports', href: '/reports', icon: BarChart3, current: location.pathname === '/reports' },
@@ -41,10 +61,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <BookOpen className="text-red-600 dark:text-red-400" size={32} />
+              <BookOpen className={getBusinessColor()} size={32} />
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-200">Beauty Zone</h1>
-                <p className="text-xs text-gray-600 dark:text-gray-400 transition-colors duration-200">Business Management</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
+                  {getBusinessDisplayName()}
+                </h1>
+                <p className="text-xs text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                  {user ? `${user.username} (${user.role})` : 'Business Management'}
+                </p>
               </div>
             </div>
             
@@ -70,6 +94,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 })}
               </nav>
               
+              {/* User Menu */}
+              {user && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <User size={16} className="text-gray-600 dark:text-gray-300" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{user.username}</span>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    user.businessType === 'COSMETIC' 
+                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                      : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                  }`}>
+                    {user.businessType}
+                  </span>
+                </div>
+              )}
+
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
@@ -78,6 +117,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
+
+              {/* Logout Button */}
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                  aria-label="Logout"
+                  title="Logout"
+                >
+                  <LogOut size={20} />
+                </button>
+              )}
             </div>
 
             {/* Mobile menu button */}

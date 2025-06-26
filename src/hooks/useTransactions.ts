@@ -1,112 +1,128 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction, DateFilter, SortConfig } from '../types';
-import { saveTransactions, loadTransactions, generateId } from '../utils/storage';
+import { transactionAPI } from '../utils/api';
+import { loadTransactions } from '../utils/storage';
 
 export const useTransactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTransactionsFromAPI = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await transactionAPI.getAll();
+      setTransactions(data);
+    } catch (err) {
+      console.error('Failed to load transactions from API:', err);
+      setError('Failed to load transactions from server');
+      // Fallback to local storage
+      const localTransactions = loadTransactions();
+      setTransactions(localTransactions);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadedTransactions = loadTransactions();
-    setTransactions(loadedTransactions);
-    setIsLoading(false);
+    loadTransactionsFromAPI();
   }, []);
 
-  const addTransaction = (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newTransaction: Transaction = {
-      ...transactionData,
-      id: generateId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    const updatedTransactions = [...transactions, newTransaction];
-    setTransactions(updatedTransactions);
-    saveTransactions(updatedTransactions);
-    return newTransaction;
+  const addTransaction = async (transactionData: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'businessType' | 'userId' | 'user'>) => {
+    try {
+      setError(null);
+      const newTransaction = await transactionAPI.create(transactionData);
+      setTransactions(prev => [...prev, newTransaction]);
+      return newTransaction;
+    } catch (err) {
+      console.error('Failed to create transaction:', err);
+      setError('Failed to create transaction');
+      throw err;
+    }
   };
 
-  const updateTransaction = (id: string, updates: Partial<Transaction>) => {
-    const updatedTransactions = transactions.map(t => 
-      t.id === id ? { ...t, ...updates, updatedAt: new Date() } : t
-    );
-    setTransactions(updatedTransactions);
-    saveTransactions(updatedTransactions);
+  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
+    try {
+      setError(null);
+      const updatedTransaction = await transactionAPI.update(id, updates);
+      setTransactions(prev => prev.map(t => t.id === id ? updatedTransaction : t));
+    } catch (err) {
+      console.error('Failed to update transaction:', err);
+      setError('Failed to update transaction');
+      throw err;
+    }
   };
 
-  const deleteTransaction = (id: string) => {
-    const updatedTransactions = transactions.filter(t => t.id !== id);
-    setTransactions(updatedTransactions);
-    saveTransactions(updatedTransactions);
+  const deleteTransaction = async (id: string) => {
+    try {
+      setError(null);
+      await transactionAPI.delete(id);
+      setTransactions(prev => prev.filter(t => t.id !== id));
+    } catch (err) {
+      console.error('Failed to delete transaction:', err);
+      setError('Failed to delete transaction');
+      throw err;
+    }
   };
 
-  const mergeTransactions = (importedTransactions: Transaction[]) => {
-    // Add metadata to imported transactions if missing
-    const transactionsWithMetadata = importedTransactions.map(transaction => {
-      // If the transaction already has an ID, keep it, otherwise generate a new one
-      const id = transaction.id || generateId();
-      const now = new Date();
+  const mergeTransactions = async (importedTransactions: Transaction[]) => {
+    try {
+      setError(null);
+      let importedCount = 0;
       
-      return {
-        ...transaction,
-        id,
-        // If createdAt/updatedAt are missing, add them
-        createdAt: transaction.createdAt || now,
-        updatedAt: transaction.updatedAt || now,
-      };
-    });
-    
-    // Create a map of existing transactions by date for quick lookup
-    const existingByDate = new Map<string, Transaction[]>();
-    transactions.forEach(transaction => {
-      if (!existingByDate.has(transaction.date)) {
-        existingByDate.set(transaction.date, []);
+      for (const transaction of importedTransactions) {
+        // Check if transaction already exists
+        const exists = transactions.some(existing => 
+          existing.date === transaction.date &&
+          existing.cashAmount === transaction.cashAmount &&
+          existing.onlineReceived === transaction.onlineReceived &&
+          existing.vendorAmount === transaction.vendorAmount &&
+          existing.expenses === transaction.expenses &&
+          existing.rahulAmount === transaction.rahulAmount &&
+          existing.sagarAmount === transaction.sagarAmount &&
+          existing.usedCash === transaction.usedCash &&
+          existing.onlineUsed === transaction.onlineUsed
+        );
+        
+        if (!exists) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id, createdAt, updatedAt, businessType, userId, user, ...transactionData } = transaction;
+          await transactionAPI.create(transactionData);
+          importedCount++;
+        }
       }
-      existingByDate.get(transaction.date)?.push(transaction);
-    });
-    
-    // Filter out imported transactions that are exact duplicates
-    const filteredImports = transactionsWithMetadata.filter(imported => {
-      const existingForDate = existingByDate.get(imported.date) || [];
       
-      // Check if there's an exact match for all values (except id, createdAt, updatedAt)
-      return !existingForDate.some(existing => 
-        existing.cashAmount === imported.cashAmount &&
-        existing.onlineReceived === imported.onlineReceived &&
-        existing.vendorAmount === imported.vendorAmount &&
-        existing.expenses === imported.expenses &&
-        existing.rahulAmount === imported.rahulAmount &&
-        existing.sagarAmount === imported.sagarAmount &&
-        existing.usedCash === imported.usedCash &&
-        existing.onlineUsed === imported.onlineUsed
-      );
-    });
-    
-    // Combine with existing transactions
-    const updatedTransactions = [...transactions, ...filteredImports];
-    
-    // Sort by date (newest first)
-    updatedTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
-    setTransactions(updatedTransactions);
-    saveTransactions(updatedTransactions);
-    
-    return filteredImports.length;
+      // Reload transactions to get the latest data
+      await loadTransactionsFromAPI();
+      
+      return importedCount;
+    } catch (err) {
+      console.error('Failed to merge transactions:', err);
+      setError('Failed to merge transactions');
+      throw err;
+    }
+  };
+
+  const refreshTransactions = () => {
+    loadTransactionsFromAPI();
   };
 
   return {
     transactions,
     isLoading,
+    error,
     addTransaction,
     updateTransaction,
     deleteTransaction,
     mergeTransactions,
+    refreshTransactions,
   };
 };
 
 export const useFilteredTransactions = (transactions: Transaction[], dateFilter: DateFilter, sortConfig: SortConfig) => {
   return useMemo(() => {
-    let filtered = transactions.filter(transaction => {
+    const filtered = transactions.filter(transaction => {
       const transactionDate = new Date(transaction.date);
       const startDate = new Date(dateFilter.startDate);
       const endDate = new Date(dateFilter.endDate);
@@ -116,20 +132,32 @@ export const useFilteredTransactions = (transactions: Transaction[], dateFilter:
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aValue = a[sortConfig.field];
-      let bValue = b[sortConfig.field];
+      const aValue = a[sortConfig.field];
+      const bValue = b[sortConfig.field];
 
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const aLower = aValue.toLowerCase();
+        const bLower = bValue.toLowerCase();
+        
+        if (aLower < bLower) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aLower > bLower) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
       }
 
-      if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
       }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
+
       return 0;
     });
 

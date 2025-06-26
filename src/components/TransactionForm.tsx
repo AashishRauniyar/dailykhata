@@ -5,7 +5,7 @@ import { X, Save, AlertCircle, Calendar, DollarSign } from 'lucide-react';
 interface TransactionFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onSubmit: (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'businessType' | 'userId' | 'user'>) => void;
   editingTransaction?: Transaction;
 }
 
@@ -15,16 +15,26 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onSubmit,
   editingTransaction,
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    date: string;
+    cashAmount: string | number;
+    onlineReceived: string | number;
+    vendorAmount: string | number;
+    expenses: string | number;
+    rahulAmount: string | number;
+    sagarAmount: string | number;
+    usedCash: string | number;
+    onlineUsed: string | number;
+  }>({
     date: new Date().toISOString().split('T')[0],
-    cashAmount: 0,
-    onlineReceived: 0,
-    vendorAmount: 0,
-    expenses: 0,
-    rahulAmount: 0,
-    sagarAmount: 0,
-    usedCash: 0,
-    onlineUsed: 0,
+    cashAmount: '',
+    onlineReceived: '',
+    vendorAmount: '',
+    expenses: '',
+    rahulAmount: '',
+    sagarAmount: '',
+    usedCash: '',
+    onlineUsed: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,14 +56,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     } else {
       setFormData({
         date: new Date().toISOString().split('T')[0],
-        cashAmount: 0,
-        onlineReceived: 0,
-        vendorAmount: 0,
-        expenses: 0,
-        rahulAmount: 0,
-        sagarAmount: 0,
-        usedCash: 0,
-        onlineUsed: 0,
+        cashAmount: '',
+        onlineReceived: '',
+        vendorAmount: '',
+        expenses: '',
+        rahulAmount: '',
+        sagarAmount: '',
+        usedCash: '',
+        onlineUsed: '',
       });
     }
     setErrors({});
@@ -69,7 +79,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     
     // Check for negative values
     Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'date' && typeof value === 'number' && value < 0) {
+      if (key !== 'date' && value !== '' && parseFloat(value as string) < 0) {
         newErrors[key] = 'Value cannot be negative';
       }
     });
@@ -81,7 +91,19 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      // Convert empty strings to 0 for submission
+      const submissionData = {
+        date: formData.date,
+        cashAmount: parseFloat(formData.cashAmount as string) || 0,
+        onlineReceived: parseFloat(formData.onlineReceived as string) || 0,
+        vendorAmount: parseFloat(formData.vendorAmount as string) || 0,
+        expenses: parseFloat(formData.expenses as string) || 0,
+        rahulAmount: parseFloat(formData.rahulAmount as string) || 0,
+        sagarAmount: parseFloat(formData.sagarAmount as string) || 0,
+        usedCash: parseFloat(formData.usedCash as string) || 0,
+        onlineUsed: parseFloat(formData.onlineUsed as string) || 0,
+      };
+      onSubmit(submissionData);
       onClose();
     }
   };
@@ -89,7 +111,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: field === 'date' ? value : parseFloat(value) || 0,
+      [field]: field === 'date' ? value : value,
     }));
     
     // Clear error when field is edited
@@ -131,9 +153,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
   if (!isOpen) return null;
 
-  const totalIncome = formData.cashAmount + formData.onlineReceived;
-  const totalExpenses = formData.vendorAmount + formData.expenses + formData.usedCash + formData.onlineUsed;
-  const totalWithdrawals = formData.rahulAmount + formData.sagarAmount;
+  const totalIncome = (parseFloat(formData.cashAmount as string) || 0) + (parseFloat(formData.onlineReceived as string) || 0);
+  const totalExpenses = (parseFloat(formData.vendorAmount as string) || 0) + (parseFloat(formData.expenses as string) || 0) + (parseFloat(formData.usedCash as string) || 0) + (parseFloat(formData.onlineUsed as string) || 0);
+  const totalWithdrawals = (parseFloat(formData.rahulAmount as string) || 0) + (parseFloat(formData.sagarAmount as string) || 0);
   const netAmount = totalIncome - totalExpenses - totalWithdrawals;
 
   return (

@@ -8,7 +8,7 @@ import TransactionTable from '../components/TransactionTable';
 import ExportImport from '../components/ExportImport';
 
 const DailyKhata: React.FC = () => {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, mergeTransactions } = useTransactions();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, mergeTransactions, error } = useTransactions();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
@@ -17,6 +17,7 @@ const DailyKhata: React.FC = () => {
     direction: 'desc',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
   // Sort transactions by sortConfig
   const sortedTransactions = [...transactions].sort((a, b) => {
@@ -42,9 +43,14 @@ const DailyKhata: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
-      deleteTransaction(id);
+      try {
+        setOperationError(null);
+        await deleteTransaction(id);
+      } catch {
+        setOperationError('Failed to delete transaction. Please try again.');
+      }
     }
   };
 
@@ -53,22 +59,31 @@ const DailyKhata: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleModalSubmit = (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (editingTransaction) {
-      updateTransaction(editingTransaction.id, transaction);
-    } else {
-      addTransaction(transaction);
+  const handleModalSubmit = async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'businessType' | 'userId' | 'user'>) => {
+    try {
+      setOperationError(null);
+      if (editingTransaction) {
+        await updateTransaction(editingTransaction.id, transaction);
+      } else {
+        await addTransaction(transaction);
+      }
+      setIsModalOpen(false);
+    } catch {
+      setOperationError('Failed to save transaction. Please try again.');
     }
-    setIsModalOpen(false);
   };
 
-  const handleImport = (importedTransactions: Transaction[]) => {
+  const handleImport = async (importedTransactions: Transaction[]) => {
     setIsLoading(true);
-    // Simulate loading state for better UX
-    setTimeout(() => {
-      mergeTransactions(importedTransactions);
+    try {
+      setOperationError(null);
+      const importedCount = await mergeTransactions(importedTransactions);
+      alert(`Successfully imported ${importedCount} new transactions.`);
+    } catch {
+      setOperationError('Failed to import transactions. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSort = (field: keyof Transaction) => {
@@ -124,10 +139,19 @@ const DailyKhata: React.FC = () => {
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Plus size={18} />
-              Add Transaction
+              New Transaction
             </button>
           </div>
         </div>
+
+        {/* Error Display */}
+        {(error || operationError) && (
+          <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="text-red-700 dark:text-red-300 text-sm">
+              {error || operationError}
+            </div>
+          </div>
+        )}
 
         {/* Transaction Table */}
         <TransactionTable
@@ -181,6 +205,14 @@ const DailyKhata: React.FC = () => {
               <div className="text-sm sm:text-base font-semibold text-purple-600 dark:text-purple-400 transition-colors duration-200">{formatCurrency(totals.totalSale)}</div>
             </div>
           </div>
+        </div>
+
+        {/* Export/Import Section */}
+        <div className="mt-4 sm:mt-6">
+          <ExportImport 
+            transactions={transactions}
+            onImport={handleImport}
+          />
         </div>
 
         {/* Quick Stats */}

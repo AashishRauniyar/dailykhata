@@ -23,18 +23,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   isLoading = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddingNew, setIsAddingNew] = useState(false);
-  const [newTransactionData, setNewTransactionData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    cashAmount: 0,
-    onlineReceived: 0,
-    vendorAmount: 0,
-    expenses: 0,
-    rahulAmount: 0,
-    sagarAmount: 0,
-    usedCash: 0,
-    onlineUsed: 0,
-  });
+
 
   const columns = [
     { field: 'date' as keyof Transaction, label: 'Date', width: 'min-w-[90px] w-[10%]' },
@@ -48,28 +37,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     { field: 'onlineUsed' as keyof Transaction, label: 'Online Out', width: 'min-w-[80px] w-[9%]' },
   ];
 
-  const handleNewTransactionChange = (field: string, value: string) => {
-    setNewTransactionData(prev => ({
-      ...prev,
-      [field]: field === 'date' ? value : parseFloat(value) || 0,
-    }));
-  };
 
-  const handleAddNewSubmit = () => {
-    onAddNew();
-    setIsAddingNew(false);
-    setNewTransactionData({
-      date: new Date().toISOString().split('T')[0],
-      cashAmount: 0,
-      onlineReceived: 0,
-      vendorAmount: 0,
-      expenses: 0,
-      rahulAmount: 0,
-      sagarAmount: 0,
-      usedCash: 0,
-      onlineUsed: 0,
-    });
-  };
 
   // Filter transactions based on search term
   const filteredTransactions = transactions.filter(transaction => {
@@ -180,11 +148,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               />
             </div>
             <button
-              onClick={() => setIsAddingNew(true)}
+              onClick={onAddNew}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               <Plus size={18} />
-              Add
+              Quick Add
             </button>
           </div>
         </div>
@@ -234,61 +202,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <td className="px-2 sm:px-3 py-3"></td>
             </tr>
 
-            {/* Add New Row */}
-            {isAddingNew && (
-              <tr className="bg-green-50 dark:bg-green-900/30 border-b-2 border-green-200 dark:border-green-800 animate-slide-in transition-colors duration-200">
-                <td className="px-2 sm:px-3 py-3">
-                  <div className="flex flex-col gap-1">
-                    <input
-                      type="date"
-                      value={newTransactionData.date}
-                      onChange={(e) => handleNewTransactionChange('date', e.target.value)}
-                      className="text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded px-1 py-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors duration-200"
-                    />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:inline transition-colors duration-200">
-                      {getDayName(newTransactionData.date)}
-                    </span>
-                  </div>
-                </td>
-                {columns.slice(1).map((column) => (
-                  <td key={column.field} className="px-2 sm:px-3 py-3">
-                    <input
-                      type="number"
-                      placeholder="0"
-                      value={newTransactionData[column.field as keyof typeof newTransactionData] || ''}
-                      onChange={(e) => handleNewTransactionChange(column.field, e.target.value)}
-                      className="w-full text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded px-1 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors duration-200"
-                      min="0"
-                    />
-                  </td>
-                ))}
-                <td className="px-2 sm:px-3 py-3">
-                  <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-200">
-                    {formatCurrency(
-                      (newTransactionData.cashAmount || 0) + 
-                      (newTransactionData.onlineReceived || 0)
-                    )}
-                  </span>
-                </td>
-                <td className="px-2 sm:px-3 py-3">
-                  <div className="flex gap-1 sm:gap-2">
-                    <button
-                      onClick={handleAddNewSubmit}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-xs sm:text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
-                    >
-                      <Plus size={14} className="hidden sm:inline" />
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setIsAddingNew(false)}
-                      className="bg-gray-500 text-white px-2 py-1 rounded text-xs sm:text-sm hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )}
+
 
             {/* Loading State */}
             {isLoading ? (
@@ -384,7 +298,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400 transition-colors duration-200">No transactions found for the selected period.</p>
           <button
-            onClick={() => setIsAddingNew(true)}
+            onClick={onAddNew}
             className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
           >
             <Plus size={18} />
