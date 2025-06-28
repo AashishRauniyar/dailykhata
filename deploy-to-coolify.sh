@@ -103,6 +103,50 @@ echo "MYSQL_PASSWORD=$DB_PASSWORD"
 echo "MYSQL_ROOT_PASSWORD=$ROOT_PASSWORD"
 echo ""
 
+# Ask user about domain preference
+echo "🌐 DOMAIN CONFIGURATION:"
+echo "========================"
+echo ""
+echo "Choose your deployment option:"
+echo "1) 🆓 IP Address Access (no domain needed)"
+echo "2) 🎯 Coolify Auto-Generated Subdomain (free SSL)"
+echo "3) 💰 Custom Domain (you own a domain)"
+echo ""
+
+read -p "Enter your choice (1-3): " -n 1 -r domain_choice
+echo ""
+echo ""
+
+case $domain_choice in
+    1)
+        print_status "Selected: IP Address Access"
+        URL_TYPE="IP"
+        print_warning "You'll need to replace 'your-vps-ip' with your actual VPS IP address"
+        FRONTEND_URL="http://your-vps-ip:3000"
+        VITE_API_URL="http://your-vps-ip:3001/api"
+        ;;
+    2)
+        print_status "Selected: Coolify Auto-Generated Subdomain"
+        URL_TYPE="AUTO_SUBDOMAIN"
+        print_warning "Coolify will generate a subdomain like: financial-tracker-abc123.coolify.app"
+        FRONTEND_URL="https://your-auto-generated-subdomain.coolify.app"
+        VITE_API_URL="https://your-auto-generated-subdomain.coolify.app/api"
+        ;;
+    3)
+        print_status "Selected: Custom Domain"
+        URL_TYPE="CUSTOM"
+        print_warning "Make sure your domain DNS points to your VPS IP"
+        FRONTEND_URL="https://your-domain.com"
+        VITE_API_URL="https://your-domain.com/api"
+        ;;
+    *)
+        print_warning "Invalid choice, defaulting to IP Address Access"
+        URL_TYPE="IP"
+        FRONTEND_URL="http://your-vps-ip:3000"
+        VITE_API_URL="http://your-vps-ip:3001/api"
+        ;;
+esac
+
 # Create a secrets file for reference
 cat > deployment-secrets.txt << EOF
 # Financial Tracker - Generated Production Secrets
@@ -115,15 +159,17 @@ JWT_SECRET=$JWT_SECRET
 MYSQL_PASSWORD=$DB_PASSWORD
 MYSQL_ROOT_PASSWORD=$ROOT_PASSWORD
 
-# Other required variables (update with your values):
+# Base Configuration
 MYSQL_DATABASE=financial_tracker
 MYSQL_USER=financial_user
 NODE_ENV=production
-FRONTEND_URL=https://your-domain.com
-VITE_API_URL=https://your-domain.com/api
 BACKEND_PORT=3001
 FRONTEND_PORT=3000
 DB_PORT=3306
+
+# URL Configuration ($URL_TYPE)
+FRONTEND_URL=$FRONTEND_URL
+VITE_API_URL=$VITE_API_URL
 EOF
 
 print_success "Secrets saved to deployment-secrets.txt"
@@ -175,14 +221,49 @@ echo ""
 echo "3. 🔑 Set Environment Variables in Coolify:"
 echo "   (Copy from deployment-secrets.txt)"
 echo ""
-echo "4. 🗄️  Configure Storage:"
+
+case $URL_TYPE in
+    "IP")
+        echo "4. 🌍 IP Access Setup:"
+        echo "   - No domain configuration needed"
+        echo "   - Update FRONTEND_URL and VITE_API_URL with your VPS IP"
+        echo "   - Ensure ports 3000 and 3001 are open in firewall"
+        echo ""
+        echo "   Example environment variables:"
+        echo "   FRONTEND_URL=http://123.456.789.10:3000"
+        echo "   VITE_API_URL=http://123.456.789.10:3001/api"
+        ;;
+    "AUTO_SUBDOMAIN")
+        echo "4. 🌍 Auto-Subdomain Setup:"
+        echo "   - Go to Domains tab in Coolify"
+        echo "   - Click 'Generate Domain' button"
+        echo "   - Copy the generated subdomain"
+        echo "   - Update FRONTEND_URL and VITE_API_URL with the subdomain"
+        echo "   - Enable SSL (automatic with Let's Encrypt)"
+        echo ""
+        echo "   Example environment variables:"
+        echo "   FRONTEND_URL=https://financial-tracker-abc123.coolify.app"
+        echo "   VITE_API_URL=https://financial-tracker-abc123.coolify.app/api"
+        ;;
+    "CUSTOM")
+        echo "4. 🌍 Custom Domain Setup:"
+        echo "   - Point your domain DNS to your VPS IP"
+        echo "   - Go to Domains tab in Coolify"
+        echo "   - Add Domain: your-domain.com"
+        echo "   - Enable SSL (automatic with Let's Encrypt)"
+        echo "   - Update FRONTEND_URL and VITE_API_URL with your domain"
+        echo ""
+        echo "   Example environment variables:"
+        echo "   FRONTEND_URL=https://your-domain.com"
+        echo "   VITE_API_URL=https://your-domain.com/api"
+        ;;
+esac
+
+echo ""
+echo "5. 🗄️  Configure Storage:"
 echo "   - Name: mysql-data"
 echo "   - Mount Path: /var/lib/mysql"
 echo "   - Host Path: /data/financial-tracker/mysql"
-echo ""
-echo "5. 🌍 Add Domain (optional):"
-echo "   - Add your domain in Domains tab"
-echo "   - Enable SSL (automatic with Let's Encrypt)"
 echo ""
 echo "6. 🚀 Deploy:"
 echo "   - Click Deploy button"
@@ -191,8 +272,41 @@ echo ""
 echo "📖 For detailed instructions, see: COOLIFY_DEPLOYMENT.md"
 echo ""
 print_warning "Remember to:"
-echo "  - Update .env with your production values"
+echo "  - Update environment variables with actual URLs/IPs"
 echo "  - Change default user passwords after first login"
 echo "  - Delete deployment-secrets.txt after deployment"
+
+case $URL_TYPE in
+    "IP")
+        echo "  - Open firewall ports 3000 and 3001 if needed"
+        ;;
+    "AUTO_SUBDOMAIN")
+        echo "  - Generate subdomain in Coolify Domains tab"
+        echo "  - Update URLs with the generated subdomain"
+        ;;
+    "CUSTOM")
+        echo "  - Configure DNS A record pointing to your VPS IP"
+        echo "  - Wait for DNS propagation before deployment"
+        ;;
+esac
+
 echo ""
-print_success "Ready for Coolify deployment! 🎉" 
+print_success "Ready for Coolify deployment! 🎉"
+
+case $URL_TYPE in
+    "IP")
+        echo ""
+        echo "📱 After deployment, access your app at:"
+        echo "   http://your-vps-ip:3000"
+        ;;
+    "AUTO_SUBDOMAIN")
+        echo ""
+        echo "📱 After deployment, access your app at:"
+        echo "   https://your-generated-subdomain.coolify.app"
+        ;;
+    "CUSTOM")
+        echo ""
+        echo "📱 After deployment, access your app at:"
+        echo "   https://your-domain.com"
+        ;;
+esac 
