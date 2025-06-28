@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum BusinessType {
+  COSMETIC
+  CLOTHING
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id          String       @id @default(cuid())
+  username    String       @unique
+  password    String
+  businessType BusinessType
+  role        UserRole     @default(USER)
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  transactions Transaction[]
+
+  @@map("users")
+}
+
+model Transaction {
+  id            String      @id @default(cuid())
+  date          String
+  cashAmount    Float       @default(0)
+  onlineReceived Float      @default(0)
+  vendorAmount  Float       @default(0)
+  expenses      Float       @default(0)
+  rahulAmount   Float       @default(0)
+  sagarAmount   Float       @default(0)
+  usedCash      Float       @default(0)
+  onlineUsed    Float       @default(0)
+  businessType  BusinessType
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Relations
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+} 
