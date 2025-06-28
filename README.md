@@ -1,341 +1,289 @@
-# Financial Tracker - Complete Business Management System
+# Financial Tracker - Full Stack Application
 
-A comprehensive financial tracking application built with React, Node.js, and MySQL, designed for managing daily business transactions, expenses, and revenue across multiple business types.
+A comprehensive financial tracking application built with React, TypeScript, Node.js, Express, Prisma, and MySQL.
 
-## 🚀 Quick Start (One Command Setup)
+## 🚀 Features
 
-### Option 1: Local Development with Docker ⭐
-**Get everything running locally in under 5 minutes:**
+- **Daily Transaction Tracking**: Record cash amounts, online payments, expenses, and distributions
+- **Real-time Calculations**: Automatic financial summaries and profit/loss calculations
+- **Date Filtering**: Filter transactions by custom date ranges
+- **Data Export/Import**: Export data to Excel/PDF and import from Excel
+- **MySQL Database**: Persistent data storage with MySQL
+- **API Backend**: RESTful API built with Node.js and Express
+- **Responsive Design**: Modern UI built with React and Tailwind CSS
 
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd project
-
-# Start everything with Docker (recommended)
-./docker-start.sh
-```
-
-### Option 2: Production Deployment with Coolify 🌐
-**Deploy to your VPS with Coolify:**
-
-```bash
-# Prepare for deployment
-./deploy-to-coolify.sh
-
-# Follow the generated instructions to deploy via Coolify
-```
-
-**That's it!** 🎉
-
----
-
-## 📱 Access Your Application
-
-### Local Development
-- 📱 **Frontend**: http://localhost:3000
-- 🔧 **Backend API**: http://localhost:3001
-- 🗄️ **Database**: Automatically configured and seeded
-
-### Production (with your domain)
-- 📱 **Frontend**: https://your-domain.com
-- 🔧 **Backend API**: https://your-domain.com/api
-- 🔒 **SSL**: Automatically configured
-
-### Default Login Credentials
-
-**Cosmetic Business:**
-- Admin: `cosmetic_admin` / `cosmetic123`
-- User: `cosmetic_user` / `cosmetic123`
-
-**Clothing Business:**
-- Admin: `clothing_admin` / `clothing123`
-- User: `clothing_user` / `clothing123`
-
-## ✨ Features
-
-### 💰 Financial Management
-- **Daily Transaction Tracking**: Record cash and online transactions
-- **Multi-Business Support**: Separate tracking for Cosmetic and Clothing businesses
-- **Expense Management**: Track vendor payments, general expenses, and individual expenses
-- **Real-time Calculations**: Automatic daily sale calculations and profit tracking
-
-### 📊 Analytics & Reporting
-- **Financial Summaries**: Daily, weekly, and monthly overviews
-- **Export/Import**: Excel and PDF export functionality
-- **Historical Data**: Complete transaction history with search and filtering
-- **Visual Reports**: Charts and graphs for business insights
-
-### 🔐 Security & Access Control
-- **JWT Authentication**: Secure login system
-- **Role-based Access**: Admin and User roles
-- **Business Separation**: Users can only access their business data
-- **Session Management**: Secure token handling
-
-### 🎨 User Experience
-- **Responsive Design**: Works on desktop, tablet, and mobile
-- **Dark/Light Mode**: Theme switching support
-- **Real-time Updates**: Live data synchronization
-- **Intuitive Interface**: Clean, modern design with easy navigation
-
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** with TypeScript
-- **Vite** for fast development and building
-- **Tailwind CSS** for styling
-- **Lucide React** for icons
-- **Axios** for API communication
+- React 18
+- TypeScript
+- Tailwind CSS
+- Vite
+- React Router
+- Axios
+- Lucide React (icons)
 
 ### Backend
-- **Node.js** with Express
-- **TypeScript** for type safety
-- **Prisma** ORM for database management
-- **JWT** for authentication
-- **MySQL** for data persistence
+- Node.js
+- Express.js
+- TypeScript
+- Prisma ORM
+- MySQL Database
+- CORS support
 
-### Infrastructure
-- **Docker** for containerization
-- **Docker Compose** for orchestration
-- **Nginx** for frontend serving
-- **Health checks** for service monitoring
+## 📋 Prerequisites
 
-## 📋 Deployment Options
+Before you begin, ensure you have the following installed on your machine:
 
-### Option 1: Local Docker (Recommended for Development) ⭐
+- **Node.js** (v18 or higher)
+- **npm** or **yarn**
+- **MySQL** (v8.0 or higher)
+- **Git**
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+
 ```bash
-./docker-start.sh
+git clone <repository-url>
+cd financial-tracker
 ```
 
-### Option 2: Coolify (Production VPS Deployment) 🌐
-```bash
-./deploy-to-coolify.sh
-# Follow the generated instructions
-```
+### 2. Install Dependencies
 
-### Option 3: Local Development
 ```bash
-# Install dependencies
+# Install frontend dependencies
 npm install
-cd backend && npm install
 
-# Setup database (MySQL required)
-# See MYSQL_COMPLETE_SETUP.md for database setup
+# Install backend dependencies
+cd backend
+npm install
+cd ..
+```
 
-# Start backend
-cd backend && npm run dev
+### 3. Set Up MySQL Database
 
-# Start frontend (in another terminal)
+1. Start your MySQL server
+2. Create a new database:
+
+```sql
+CREATE DATABASE financial_tracker;
+```
+
+3. Create a MySQL user (optional but recommended):
+
+```sql
+CREATE USER 'financial_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON financial_tracker.* TO 'financial_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 4. Environment Configuration
+
+Create a `.env` file in the `backend` directory:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Edit the `.env` file with your database credentials:
+
+```env
+# Database
+DATABASE_URL="mysql://username:password@localhost:3306/financial_tracker"
+
+# Server
+PORT=3001
+NODE_ENV=development
+
+# CORS
+FRONTEND_URL=http://localhost:5173
+```
+
+Replace `username` and `password` with your MySQL credentials.
+
+### 5. Set Up Database Schema
+
+```bash
+cd backend
+
+# Generate Prisma client
+npm run prisma:generate
+
+# Push the schema to the database
+npm run prisma:push
+
+# Or run migrations (if you want migration files)
+# npm run prisma:migrate
+```
+
+### 6. Start the Application
+
+#### Option 1: Start both frontend and backend together
+```bash
+# From the root directory
+npm run dev:fullstack
+```
+
+#### Option 2: Start separately
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
 npm run dev
 ```
 
-### Option 4: Manual Docker
+**Terminal 2 - Frontend:**
 ```bash
-docker-compose up --build -d
-```
-
-## 📖 Documentation
-
-- **[Quick Start Guide](QUICK_START.md)** - Get started in minutes
-- **[Coolify Deployment Guide](COOLIFY_DEPLOYMENT.md)** - Complete VPS deployment with Coolify
-- **[Docker Setup Guide](DOCKER_SETUP.md)** - Complete Docker setup instructions
-- **[Local Setup Guide](SETUP.md)** - Local development setup
-- **[MySQL Setup Guide](MYSQL_COMPLETE_SETUP.md)** - Database configuration
-- **[Local Testing Guide](LOCAL_TESTING.md)** - Testing procedures
-
-## 🎯 Usage Guide
-
-### Adding Transactions
-1. Navigate to "Daily Khata" page
-2. Click "Quick Add" or use the transaction form
-3. Fill in the transaction details:
-   - **Cash In**: Money received in cash
-   - **Online In**: Money received through online payments
-   - **To Vendor**: Payments made to suppliers
-   - **Expenses**: General business expenses
-   - **Rahul/Sagar Exp**: Individual expense tracking
-   - **Cash Out**: Cash used for expenses
-   - **Online Out**: Online payments made
-
-### Viewing Reports
-1. Go to "Reports" page
-2. Select date range and business type
-3. View financial summaries and charts
-4. Export data as Excel or PDF
-
-### Managing Data
-1. Use "History" page to view all transactions
-2. Search and filter transactions
-3. Edit or delete entries as needed
-4. Export/import data for backup
-
-## 🔧 Management Commands
-
-### Local Docker Commands
-```bash
-# Start everything
-./docker-start.sh
-
-# Stop everything
-./docker-stop.sh
-
-# Test everything is working
-./test-docker.sh
-
-# View logs
-docker-compose logs -f
-
-# Complete reset
-docker-compose down -v && ./docker-start.sh
-```
-
-### Coolify Deployment Commands
-```bash
-# Prepare for deployment
-./deploy-to-coolify.sh
-
-# Check deployment status (in Coolify dashboard)
-# Monitor logs and health checks
-```
-
-### Development Commands
-```bash
-# Frontend development
 npm run dev
-
-# Backend development
-cd backend && npm run dev
-
-# Database operations
-cd backend && npm run prisma:studio
-cd backend && npm run prisma:migrate
 ```
 
-## 🔍 API Endpoints
+The application will be available at:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3001
 
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/me` - Get current user
+## 🔧 Development Commands
 
-### Transactions
+### Frontend Commands
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
+
+### Backend Commands
+```bash
+cd backend
+npm run dev              # Start development server with nodemon
+npm run build            # Build TypeScript to JavaScript
+npm run start            # Start production server
+npm run prisma:generate  # Generate Prisma client
+npm run prisma:migrate   # Run database migrations
+npm run prisma:push      # Push schema to database
+npm run prisma:studio    # Open Prisma Studio (database GUI)
+```
+
+## 📊 API Endpoints
+
+The backend provides the following REST API endpoints:
+
+- `GET /api/health` - Health check
 - `GET /api/transactions` - Get all transactions
-- `POST /api/transactions` - Create transaction
+- `GET /api/transactions/date-range?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` - Get transactions by date range
+- `GET /api/transactions/:id` - Get transaction by ID
+- `POST /api/transactions` - Create new transaction
 - `PUT /api/transactions/:id` - Update transaction
 - `DELETE /api/transactions/:id` - Delete transaction
 
-### Health Check
-- `GET /api/health` - Service health status
+## 🗃️ Database Schema
 
-## 🚨 Troubleshooting
+The application uses a single `transactions` table with the following structure:
 
-### Local Development Issues
+```sql
+CREATE TABLE transactions (
+  id VARCHAR(255) PRIMARY KEY,
+  date VARCHAR(255) NOT NULL,
+  cashAmount DOUBLE DEFAULT 0,
+  onlineReceived DOUBLE DEFAULT 0,
+  vendorAmount DOUBLE DEFAULT 0,
+  expenses DOUBLE DEFAULT 0,
+  rahulAmount DOUBLE DEFAULT 0,
+  sagarAmount DOUBLE DEFAULT 0,
+  usedCash DOUBLE DEFAULT 0,
+  onlineUsed DOUBLE DEFAULT 0,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
 
-**Port conflicts:**
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the backend directory:
+
+```env
+DATABASE_URL="mysql://username:password@localhost:3306/financial_tracker"
+PORT=3001
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+```
+
+### Frontend Environment Variables (Optional)
+
+Create a `.env` file in the root directory to customize the API URL:
+
+```env
+VITE_API_URL=http://localhost:3001/api
+```
+
+## 🚀 Production Deployment
+
+### Backend Deployment
+
+1. Build the backend:
 ```bash
-# Check what's using the ports
-netstat -tulpn | grep :3000
-netstat -tulpn | grep :3001
-netstat -tulpn | grep :3306
+cd backend
+npm run build
 ```
 
-**Database connection issues:**
+2. Set production environment variables
+3. Start the production server:
 ```bash
-# Check database logs
-docker-compose logs mysql
-
-# Test connection
-docker-compose exec mysql mysql -u financial_user -p
+npm start
 ```
 
-**Services not starting:**
+### Frontend Deployment
+
+1. Build the frontend:
 ```bash
-# Check all service status
-docker-compose ps
-
-# View specific service logs
-docker-compose logs backend
-docker-compose logs frontend
+npm run build
 ```
 
-### Production (Coolify) Issues
-
-**Check deployment logs:**
-- Go to Coolify dashboard → Your application → Logs
-
-**Health check endpoints:**
-- Frontend: `https://your-domain.com`
-- Backend: `https://your-domain.com/api/health`
-
-**Database issues:**
-- Check environment variables in Coolify
-- Verify storage configuration
-- Monitor container logs
-
-### Reset Everything
-```bash
-# Local reset
-docker-compose down -v && ./docker-start.sh
-
-# Production reset (Coolify)
-# Redeploy application through Coolify dashboard
-```
-
-## 📊 Project Structure
-
-```
-project/
-├── backend/                 # Node.js backend
-│   ├── src/
-│   │   ├── controllers/     # API controllers
-│   │   ├── middleware/      # Express middleware
-│   │   ├── routes/          # API routes
-│   │   └── utils/           # Utility functions
-│   ├── prisma/              # Database schema
-│   └── Dockerfile           # Backend container
-├── src/                     # React frontend
-│   ├── components/          # React components
-│   ├── pages/               # Page components
-│   ├── utils/               # Frontend utilities
-│   └── types/               # TypeScript types
-├── docker-compose.yml       # Local development
-├── docker-compose.prod.yml  # Production deployment
-├── docker-start.sh          # One-command local setup
-├── deploy-to-coolify.sh     # Coolify deployment prep
-└── COOLIFY_DEPLOYMENT.md    # Deployment guide
-```
+2. Deploy the `dist` folder to your hosting provider
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
-## 🎉 Getting Started
+## 🆘 Troubleshooting
 
-Choose your deployment method:
+### Common Issues
 
-### 🏠 Local Development
-```bash
-./docker-start.sh
-```
+1. **Database Connection Error**
+   - Ensure MySQL is running
+   - Check your DATABASE_URL in the .env file
+   - Verify database user permissions
 
-### 🌐 Production Deployment (Coolify)
-```bash
-./deploy-to-coolify.sh
-```
+2. **Port Already in Use**
+   - Change the PORT in your .env file
+   - Kill the process using the port: `lsof -ti:3001 | xargs kill -9`
 
-Then open your application in the browser and start managing your business finances!
+3. **CORS Errors**
+   - Ensure FRONTEND_URL in backend .env matches your frontend URL
+   - Check that both servers are running
 
----
+4. **Prisma Issues**
+   - Run `npm run prisma:generate` after schema changes
+   - Run `npm run prisma:push` to sync database schema
 
-**Need help?** 
-- **Local setup**: [Docker Setup Guide](DOCKER_SETUP.md)
-- **Production deployment**: [Coolify Deployment Guide](COOLIFY_DEPLOYMENT.md)
-- **Quick reference**: [Quick Start Guide](QUICK_START.md) 
+### Getting Help
+
+If you encounter any issues:
+
+1. Check the console logs in both frontend and backend
+2. Verify all environment variables are set correctly
+3. Ensure all dependencies are installed
+4. Check that MySQL server is running and accessible
+
+For more help, please open an issue on the repository. 

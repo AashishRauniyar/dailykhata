@@ -15,14 +15,9 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./docker-init:/docker-entrypoint-initdb.d
+      - ./mysql-init:/docker-entrypoint-initdb.d
     networks:
       - financial-tracker-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "financial_user", "-pfinancial_password"]
-      timeout: 20s
-      retries: 10
-    command: --default-authentication-plugin=mysql_native_password
 
   # Backend API
   backend:
@@ -33,26 +28,21 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: "mysql://financial_user:financial_password@mysql:3306/financial_tracker"
-      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-make-it-very-long-and-random-docker-2024"
-      JWT_EXPIRES_IN: "7d"
+      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-make-it-very-long-and-random"
       NODE_ENV: production
       PORT: 3001
       FRONTEND_URL: "http://localhost:3000"
     ports:
       - "3001:3001"
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
     networks:
       - financial-tracker-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
 
-  # Frontend
+  # Frontend (Optional - for development)
   frontend:
     build:
       context: .
@@ -62,10 +52,9 @@ services:
     environment:
       VITE_API_URL: "http://localhost:3001/api"
     ports:
-      - "3000:80"
+      - "3000:3000"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - financial-tracker-network
 

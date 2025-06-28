@@ -26,8 +26,8 @@ const Login: React.FC = () => {
       
       await login(credentials.username, credentials.password);
       navigate('/');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Login failed');
+    } catch (error: any) {
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +144,29 @@ const Login: React.FC = () => {
               </button>
             </div>
           </form>
+
+          {/* Demo Credentials */}
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Demo Credentials:</p>
+              <div className="grid grid-cols-1 gap-3 text-xs">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <div className="font-semibold text-green-800 dark:text-green-300 mb-1">🧴 Cosmetic Business</div>
+                  <div className="space-y-1 text-green-700 dark:text-green-400">
+                    <div>Admin: <code className="bg-green-100 dark:bg-green-800/50 px-1 rounded">cosmetic_admin / cosmetic123</code></div>
+                    <div>User: <code className="bg-green-100 dark:bg-green-800/50 px-1 rounded">cosmetic_user / cosmetic123</code></div>
+                  </div>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                  <div className="font-semibold text-purple-800 dark:text-purple-300 mb-1">👕 Clothing Business</div>
+                  <div className="space-y-1 text-purple-700 dark:text-purple-400">
+                    <div>Admin: <code className="bg-purple-100 dark:bg-purple-800/50 px-1 rounded">clothing_admin / clothing123</code></div>
+                    <div>User: <code className="bg-purple-100 dark:bg-purple-800/50 px-1 rounded">clothing_user / clothing123</code></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
