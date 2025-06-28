@@ -47,9 +47,16 @@ COPY --from=builder /app/src/config ./src/config
 # Generate Prisma client in production environment
 RUN npx prisma generate
 
+# Create a health check script
+RUN echo '#!/bin/sh' > /app/health-check.sh && \
+    echo 'PORT=${PORT:-8001}' >> /app/health-check.sh && \
+    echo 'curl -f http://localhost:$PORT/api/health || exit 1' >> /app/health-check.sh && \
+    chmod +x /app/health-check.sh
+
 # Create a script to handle database initialization
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'echo "🚀 Starting Financial Tracker Backend..."' >> /app/start.sh && \
+    echo 'echo "📊 Using PORT: ${PORT:-8001}"' >> /app/start.sh && \
     echo 'echo "⏳ Waiting for database to be ready..."' >> /app/start.sh && \
     echo 'while ! npx prisma db push --accept-data-loss > /dev/null 2>&1; do' >> /app/start.sh && \
     echo '  echo "⏳ Database not ready yet, waiting 5 seconds..."' >> /app/start.sh && \
@@ -65,12 +72,12 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'npm start' >> /app/start.sh && \
     chmod +x /app/start.sh
 
-# Expose port
-EXPOSE 3001
+# Expose port 8001 (new default)
+EXPOSE 8001
 
-# Health check
+# Health check using the dynamic health check script
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-  CMD curl -f http://localhost:3001/api/health || exit 1
+  CMD /app/health-check.sh
 
 # Start the application with initialization
 CMD ["/app/start.sh"] 
