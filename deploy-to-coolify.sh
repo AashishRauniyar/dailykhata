@@ -85,6 +85,42 @@ fi
 
 print_success "All required deployment files present"
 
+# Port configuration
+echo ""
+echo "🔌 PORT CONFIGURATION:"
+echo "======================"
+echo ""
+echo "Default ports for Financial Tracker:"
+echo "  Frontend: 8000"
+echo "  Backend:  8001" 
+echo "  Database: 3307"
+echo ""
+print_warning "If you have port conflicts, you can change these in the environment variables."
+echo ""
+
+read -p "Do you want to use different ports? (y/N): " -n 1 -r use_different_ports
+echo ""
+
+if [[ $use_different_ports =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "Enter your preferred ports:"
+    read -p "Frontend port (default 8000): " frontend_port
+    read -p "Backend port (default 8001): " backend_port
+    read -p "Database port (default 3307): " db_port
+    
+    # Use defaults if empty
+    FRONTEND_PORT=${frontend_port:-8000}
+    BACKEND_PORT=${backend_port:-8001}
+    DB_PORT=${db_port:-3307}
+    
+    print_status "Using custom ports: Frontend=$FRONTEND_PORT, Backend=$BACKEND_PORT, Database=$DB_PORT"
+else
+    FRONTEND_PORT=8000
+    BACKEND_PORT=8001
+    DB_PORT=3307
+    print_status "Using default ports: Frontend=$FRONTEND_PORT, Backend=$BACKEND_PORT, Database=$DB_PORT"
+fi
+
 # Generate secure secrets
 print_status "Generating secure secrets for production..."
 
@@ -122,8 +158,8 @@ case $domain_choice in
         print_status "Selected: IP Address Access"
         URL_TYPE="IP"
         print_warning "You'll need to replace 'your-vps-ip' with your actual VPS IP address"
-        FRONTEND_URL="http://your-vps-ip:3000"
-        VITE_API_URL="http://your-vps-ip:3001/api"
+        FRONTEND_URL="http://your-vps-ip:$FRONTEND_PORT"
+        VITE_API_URL="http://your-vps-ip:$BACKEND_PORT/api"
         ;;
     2)
         print_status "Selected: Coolify Auto-Generated Subdomain"
@@ -142,8 +178,8 @@ case $domain_choice in
     *)
         print_warning "Invalid choice, defaulting to IP Address Access"
         URL_TYPE="IP"
-        FRONTEND_URL="http://your-vps-ip:3000"
-        VITE_API_URL="http://your-vps-ip:3001/api"
+        FRONTEND_URL="http://your-vps-ip:$FRONTEND_PORT"
+        VITE_API_URL="http://your-vps-ip:$BACKEND_PORT/api"
         ;;
 esac
 
@@ -163,9 +199,11 @@ MYSQL_ROOT_PASSWORD=$ROOT_PASSWORD
 MYSQL_DATABASE=financial_tracker
 MYSQL_USER=financial_user
 NODE_ENV=production
-BACKEND_PORT=3001
-FRONTEND_PORT=3000
-DB_PORT=3306
+
+# Port Configuration
+BACKEND_PORT=$BACKEND_PORT
+FRONTEND_PORT=$FRONTEND_PORT
+DB_PORT=$DB_PORT
 
 # URL Configuration ($URL_TYPE)
 FRONTEND_URL=$FRONTEND_URL
@@ -227,11 +265,14 @@ case $URL_TYPE in
         echo "4. 🌍 IP Access Setup:"
         echo "   - No domain configuration needed"
         echo "   - Update FRONTEND_URL and VITE_API_URL with your VPS IP"
-        echo "   - Ensure ports 3000 and 3001 are open in firewall"
+        echo "   - Ensure ports $FRONTEND_PORT and $BACKEND_PORT are open in firewall"
         echo ""
         echo "   Example environment variables:"
-        echo "   FRONTEND_URL=http://123.456.789.10:3000"
-        echo "   VITE_API_URL=http://123.456.789.10:3001/api"
+        echo "   FRONTEND_URL=http://123.456.789.10:$FRONTEND_PORT"
+        echo "   VITE_API_URL=http://123.456.789.10:$BACKEND_PORT/api"
+        echo "   FRONTEND_PORT=$FRONTEND_PORT"
+        echo "   BACKEND_PORT=$BACKEND_PORT"
+        echo "   DB_PORT=$DB_PORT"
         ;;
     "AUTO_SUBDOMAIN")
         echo "4. 🌍 Auto-Subdomain Setup:"
@@ -244,6 +285,9 @@ case $URL_TYPE in
         echo "   Example environment variables:"
         echo "   FRONTEND_URL=https://financial-tracker-abc123.coolify.app"
         echo "   VITE_API_URL=https://financial-tracker-abc123.coolify.app/api"
+        echo "   FRONTEND_PORT=$FRONTEND_PORT"
+        echo "   BACKEND_PORT=$BACKEND_PORT"
+        echo "   DB_PORT=$DB_PORT"
         ;;
     "CUSTOM")
         echo "4. 🌍 Custom Domain Setup:"
@@ -256,6 +300,9 @@ case $URL_TYPE in
         echo "   Example environment variables:"
         echo "   FRONTEND_URL=https://your-domain.com"
         echo "   VITE_API_URL=https://your-domain.com/api"
+        echo "   FRONTEND_PORT=$FRONTEND_PORT"
+        echo "   BACKEND_PORT=$BACKEND_PORT"
+        echo "   DB_PORT=$DB_PORT"
         ;;
 esac
 
@@ -278,7 +325,8 @@ echo "  - Delete deployment-secrets.txt after deployment"
 
 case $URL_TYPE in
     "IP")
-        echo "  - Open firewall ports 3000 and 3001 if needed"
+        echo "  - Open firewall ports $FRONTEND_PORT and $BACKEND_PORT if needed"
+        echo "  - Make sure no other apps are using ports $FRONTEND_PORT, $BACKEND_PORT, $DB_PORT"
         ;;
     "AUTO_SUBDOMAIN")
         echo "  - Generate subdomain in Coolify Domains tab"
@@ -297,7 +345,7 @@ case $URL_TYPE in
     "IP")
         echo ""
         echo "📱 After deployment, access your app at:"
-        echo "   http://your-vps-ip:3000"
+        echo "   http://your-vps-ip:$FRONTEND_PORT"
         ;;
     "AUTO_SUBDOMAIN")
         echo ""
@@ -309,4 +357,11 @@ case $URL_TYPE in
         echo "📱 After deployment, access your app at:"
         echo "   https://your-domain.com"
         ;;
-esac 
+esac
+
+echo ""
+echo "🔌 Port Summary:"
+echo "================"
+echo "Frontend: $FRONTEND_PORT"
+echo "Backend:  $BACKEND_PORT"
+echo "Database: $DB_PORT" 

@@ -9,6 +9,24 @@ Before starting, ensure you have:
 - ✅ **Git repository** with your Financial Tracker code
 - ✅ **SSH access** to your VPS
 - ⚪ **Domain name** (optional - you can use IP or auto-generated subdomain)
+- ⚪ **Available ports** (default: 8000, 8001, 3307)
+
+## 🔌 Port Configuration
+
+**Default ports (changed to avoid common conflicts):**
+- **Frontend**: 8000 (was 3000)
+- **Backend**: 8001 (was 3001)  
+- **Database**: 3307 (was 3306)
+
+### Checking for Port Conflicts
+```bash
+# Check if ports are already in use on your VPS
+sudo netstat -tulpn | grep :8000
+sudo netstat -tulpn | grep :8001
+sudo netstat -tulpn | grep :3307
+
+# If ports are in use, you can change them in environment variables
+```
 
 ## 🚀 Quick Deployment Steps
 
@@ -54,10 +72,10 @@ NODE_ENV=production
 JWT_SECRET=your-super-secret-jwt-key-minimum-64-characters-long
 JWT_EXPIRES_IN=7d
 
-# Port Configuration
-BACKEND_PORT=3001
-FRONTEND_PORT=3000
-DB_PORT=3306
+# Port Configuration (changed to avoid conflicts)
+BACKEND_PORT=8001
+FRONTEND_PORT=8000
+DB_PORT=3307
 ```
 
 ### 4. Choose Your Domain Option
@@ -67,11 +85,11 @@ DB_PORT=3306
 
 ```env
 # URL Configuration for IP access
-FRONTEND_URL=http://your-vps-ip:3000
-VITE_API_URL=http://your-vps-ip:3001/api
+FRONTEND_URL=http://your-vps-ip:8000
+VITE_API_URL=http://your-vps-ip:8001/api
 ```
 
-**Access your app at**: `http://your-vps-ip:3000`
+**Access your app at**: `http://your-vps-ip:8000`
 
 #### Option B: Coolify Auto-Generated Subdomain 🎯
 **Coolify can generate a free subdomain for you:**
@@ -93,7 +111,7 @@ VITE_API_URL=https://financial-tracker-abc123.coolify.app/api
 
 1. **Go to Domains tab** in your application
 2. **Add Domain**: `your-domain.com`
-3. **Enable SSL**: Coolify will automatically handle Let's Encrypt
+3. **Enable SSL** (automatic with Let's Encrypt)
 
 ```env
 # URL Configuration for custom domain
@@ -115,13 +133,48 @@ VITE_API_URL=https://your-domain.com/api
 2. **Monitor logs** in the deployment tab
 3. **Wait for completion** (first deployment takes 5-10 minutes)
 
+## 🛠️ Port Conflict Resolution
+
+### If You Have Port Conflicts
+
+**Check what's using your ports:**
+```bash
+# Check specific ports
+sudo netstat -tulpn | grep :8000
+sudo netstat -tulpn | grep :8001
+sudo netstat -tulpn | grep :3307
+
+# See all used ports
+sudo netstat -tulpn | grep LISTEN
+```
+
+**Use alternative ports:**
+```env
+# Example: Use ports 9000, 9001, 3308 instead
+FRONTEND_PORT=9000
+BACKEND_PORT=9001
+DB_PORT=3308
+
+# Update URLs accordingly
+FRONTEND_URL=http://your-vps-ip:9000
+VITE_API_URL=http://your-vps-ip:9001/api
+```
+
+### Common Port Alternatives
+
+| Service | Default | Alternative Options |
+|---------|---------|-------------------|
+| Frontend | 8000 | 9000, 4000, 5000, 7000 |
+| Backend | 8001 | 9001, 4001, 5001, 7001 |
+| Database | 3307 | 3308, 3309, 5432, 5433 |
+
 ## 🔧 Advanced Configuration
 
 ### Reverse Proxy Setup
 
 Coolify automatically configures reverse proxy for all domain options:
 
-- **IP Access**: Direct port access (3000, 3001)
+- **IP Access**: Direct port access (8000, 8001)
 - **Auto Subdomain**: Full reverse proxy with SSL
 - **Custom Domain**: Full reverse proxy with SSL
 
@@ -165,8 +218,8 @@ Application → Resources
 Your application includes built-in health checks:
 
 **Option A (IP Access):**
-- **Frontend**: `http://your-vps-ip:3000`
-- **Backend**: `http://your-vps-ip:3001/api/health`
+- **Frontend**: `http://your-vps-ip:8000`
+- **Backend**: `http://your-vps-ip:8001/api/health`
 
 **Option B/C (Domain/Subdomain):**
 - **Frontend**: `https://your-domain.com` or `https://your-subdomain.coolify.app`
@@ -177,9 +230,9 @@ Your application includes built-in health checks:
 ### Without Custom Domain (IP Access)
 After successful deployment with IP configuration:
 
-- **Main Application**: `http://your-vps-ip:3000`
-- **API Endpoints**: `http://your-vps-ip:3001/api`
-- **Health Check**: `http://your-vps-ip:3001/api/health`
+- **Main Application**: `http://your-vps-ip:8000`
+- **API Endpoints**: `http://your-vps-ip:8001/api`
+- **Health Check**: `http://your-vps-ip:8001/api/health`
 
 **Pros**: 
 - ✅ Free - no domain cost
@@ -188,7 +241,7 @@ After successful deployment with IP configuration:
 
 **Cons**: 
 - ❌ No SSL (unless you configure manually)
-- ❌ Hard to remember IP address
+- ❌ Hard to remember IP address and port
 - ❌ Not professional looking
 
 ### With Coolify Auto-Subdomain
@@ -203,6 +256,7 @@ After successful deployment with auto-subdomain:
 - ✅ Professional subdomain
 - ✅ Easy to remember
 - ✅ Automatic reverse proxy
+- ✅ No port management needed
 
 **Cons**: 
 - ⚪ Depends on Coolify's domain service
@@ -269,7 +323,19 @@ Application → Deployments → View Logs
 - Ensure git repository is accessible
 ```
 
-#### 2. Database Connection Issues
+#### 2. Port Conflict Issues
+```bash
+# Check if ports are already in use
+sudo netstat -tulpn | grep :8000
+sudo netstat -tulpn | grep :8001
+
+# Solutions:
+- Change FRONTEND_PORT and BACKEND_PORT in environment variables
+- Stop conflicting services
+- Use alternative ports (9000, 9001, etc.)
+```
+
+#### 3. Database Connection Issues
 ```bash
 # Verify database environment variables
 # Check if database container is running
@@ -279,7 +345,7 @@ docker ps | grep mysql
 docker exec financial-tracker-db mysqladmin ping -h localhost -u financial_user -p
 ```
 
-#### 3. SSL Certificate Issues (Domain/Subdomain only)
+#### 4. SSL Certificate Issues (Domain/Subdomain only)
 ```bash
 # In Coolify dashboard:
 Application → Domains → Regenerate SSL Certificate
@@ -288,16 +354,20 @@ Application → Domains → Regenerate SSL Certificate
 nslookup your-domain.com
 ```
 
-#### 4. Application Not Accessible
+#### 5. Application Not Accessible
 
 **For IP Access:**
 ```bash
 # Check if ports are open
-telnet your-vps-ip 3000
-telnet your-vps-ip 3001
+telnet your-vps-ip 8000
+telnet your-vps-ip 8001
 
 # Check firewall settings
 sudo ufw status
+
+# If ports are blocked, open them:
+sudo ufw allow 8000
+sudo ufw allow 8001
 ```
 
 **For Domain/Subdomain:**
@@ -336,7 +406,8 @@ Before going live:
 - [ ] **Monitoring**: Health checks responding
 - [ ] **Performance**: Load testing completed
 - [ ] **DNS**: Domain properly configured (if using custom domain)
-- [ ] **Firewall**: Unnecessary ports closed
+- [ ] **Firewall**: Necessary ports open, unnecessary ports closed
+- [ ] **Port Conflicts**: Verified no conflicts with existing applications
 
 ## 🔒 Security Best Practices
 
@@ -348,6 +419,7 @@ Before going live:
 6. **Database Security**: Use strong database passwords
 7. **Network Security**: Use Coolify's internal networking
 8. **Firewall Configuration**: Only open necessary ports
+9. **Port Management**: Use non-standard ports to avoid conflicts and reduce attack surface
 
 ## 🆓 Recommended Setup for No Domain
 
@@ -360,13 +432,16 @@ FRONTEND_URL=https://financial-tracker-abc123.coolify.app
 VITE_API_URL=https://financial-tracker-abc123.coolify.app/api
 ```
 
-**Benefits**: Free SSL, professional look, easy to share
+**Benefits**: Free SSL, professional look, easy to share, no port management
 
 ### Option 2: IP Access (Simple)
 ```env
-# Use your VPS IP directly
-FRONTEND_URL=http://your-vps-ip:3000
-VITE_API_URL=http://your-vps-ip:3001/api
+# Use your VPS IP directly with custom ports
+FRONTEND_URL=http://your-vps-ip:8000
+VITE_API_URL=http://your-vps-ip:8001/api
+FRONTEND_PORT=8000
+BACKEND_PORT=8001
+DB_PORT=3307
 ```
 
 **Benefits**: Simple, no dependencies, immediate access
@@ -385,13 +460,17 @@ VITE_API_URL=http://your-vps-ip:3001/api
 ### Quick Diagnostics
 ```bash
 # Run in Coolify terminal
-curl http://localhost:3001/api/health
+curl http://localhost:8001/api/health
 docker-compose ps
 docker logs financial-tracker-backend --tail=50
+
+# Check port usage
+sudo netstat -tulpn | grep :8000
+sudo netstat -tulpn | grep :8001
 ```
 
 ---
 
-**🎉 Congratulations!** Your Financial Tracker is now running on production infrastructure with Coolify - no domain purchase required!
+**🎉 Congratulations!** Your Financial Tracker is now running on production infrastructure with Coolify - no domain purchase required and no port conflicts with your existing apps!
 
-Need help? Check the logs, verify environment variables, and ensure all containers are healthy. 
+Need help? Check the logs, verify environment variables, ensure all containers are healthy, and verify no port conflicts exist. 
