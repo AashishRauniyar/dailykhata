@@ -1,11 +1,15 @@
 import { Transaction, FinancialSummary } from '../types';
 
 export const calculateDailySale = (transaction: Transaction): number => {
-  return transaction.cashAmount + transaction.onlineReceived;
+  // New logic: Total sales = Cash in counter + Online received + Expenses + Rahul amount + Sagar amount
+  // This represents the actual sales made (money you have + money you spent/took out)
+  return transaction.cashAmount + transaction.onlineReceived + transaction.expenses + transaction.rahulAmount + transaction.sagarAmount;
 };
 
 export const calculateBusinessExpenses = (transaction: Transaction): number => {
-  return transaction.expenses + transaction.vendorAmount + transaction.usedCash + transaction.onlineUsed;
+  // New logic: Exclude vendor payments from daily business expenses
+  // Vendor payments are handled separately as they're deducted after daily calculations
+  return transaction.expenses + transaction.usedCash + transaction.onlineUsed;
 };
 
 export const calculateFinancialSummary = (transactions: Transaction[]): FinancialSummary => {

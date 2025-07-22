@@ -21,20 +21,34 @@ const DailyKhata: React.FC = () => {
 
   // Sort transactions by sortConfig
   const sortedTransactions = [...transactions].sort((a, b) => {
-    let aValue = a[sortConfig.field];
-    let bValue = b[sortConfig.field];
+    const aValue = a[sortConfig.field];
+    const bValue = b[sortConfig.field];
 
-    if (typeof aValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = (bValue as string).toLowerCase();
+    // Handle string values
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      const aLower = aValue.toLowerCase();
+      const bLower = bValue.toLowerCase();
+      if (aLower < bLower) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aLower > bLower) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
     }
 
-    if (aValue < bValue) {
-      return sortConfig.direction === 'asc' ? -1 : 1;
+    // Handle numeric values
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
     }
-    if (aValue > bValue) {
-      return sortConfig.direction === 'asc' ? 1 : -1;
-    }
+
+    // Default comparison for other types
     return 0;
   });
 
@@ -52,6 +66,78 @@ const DailyKhata: React.FC = () => {
         setOperationError('Failed to delete transaction. Please try again.');
       }
     }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      setOperationError(null);
+      setIsLoading(true);
+      
+      // Delete transactions sequentially to avoid overwhelming the server
+      for (const id of ids) {
+        await deleteTransaction(id);
+      }
+      
+      // Show success message
+      alert(`Successfully deleted ${ids.length} transactions.`);
+    } catch {
+      setOperationError('Failed to delete some transactions. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBulkExport = (selectedTransactions: Transaction[]) => {
+    if (selectedTransactions.length === 0) {
+      alert('No transactions selected for export.');
+      return;
+    }
+
+    // Export as CSV for selected transactions
+    const headers = [
+      'Date',
+      'Cash Amount',
+      'Online Received',
+      'Vendor Amount',
+      'Expenses',
+      'Rahul Amount',
+      'Sagar Amount',
+      'Used Cash',
+      'Online Used',
+      'Daily Sale',
+      'Created At',
+      'Updated At'
+    ];
+
+    const csvContent = [
+      headers.join(','),
+      ...selectedTransactions.map(transaction => [
+        transaction.date,
+        transaction.cashAmount,
+        transaction.onlineReceived,
+        transaction.vendorAmount,
+        transaction.expenses,
+        transaction.rahulAmount,
+        transaction.sagarAmount,
+        transaction.usedCash,
+        transaction.onlineUsed,
+        calculateDailySale(transaction),
+        new Date(transaction.createdAt).toISOString(),
+        new Date(transaction.updatedAt).toISOString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `selected-transactions-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert(`Successfully exported ${selectedTransactions.length} selected transactions.`);
   };
 
   const handleAddNew = () => {
@@ -160,6 +246,8 @@ const DailyKhata: React.FC = () => {
           onSort={handleSort}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onBulkDelete={handleBulkDelete}
+          onBulkExport={handleBulkExport}
           onAddNew={handleAddNew}
           isLoading={isLoading}
         />
@@ -216,17 +304,23 @@ const DailyKhata: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3 sm:p-4 text-center transition-colors duration-200 hover:shadow-md animate-fade-in">
-            <div className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium transition-colors duration-200">Total Income</div>
+            <div className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium transition-colors duration-200">Total Sales</div>
             <div className="text-base sm:text-xl font-bold text-green-700 dark:text-green-300 transition-colors duration-200">
-              {formatCurrency(totals.cashAmount + totals.onlineReceived)}
+              {formatCurrency(totals.totalSale)}
             </div>
           </div>
           <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4 text-center transition-colors duration-200 hover:shadow-md animate-fade-in">
-            <div className="text-xs sm:text-sm text-red-600 dark:text-red-400 font-medium transition-colors duration-200">Total Expenses</div>
+            <div className="text-xs sm:text-sm text-red-600 dark:text-red-400 font-medium transition-colors duration-200">Business Expenses</div>
             <div className="text-base sm:text-xl font-bold text-red-700 dark:text-red-300 transition-colors duration-200">
-              {formatCurrency(totals.vendorAmount + totals.expenses + totals.usedCash + totals.onlineUsed)}
+              {formatCurrency(totals.expenses + totals.usedCash + totals.onlineUsed)}
+            </div>
+          </div>
+          <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg p-3 sm:p-4 text-center transition-colors duration-200 hover:shadow-md animate-fade-in">
+            <div className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium transition-colors duration-200">Vendor Payments</div>
+            <div className="text-base sm:text-xl font-bold text-orange-700 dark:text-orange-300 transition-colors duration-200">
+              {formatCurrency(totals.vendorAmount)}
             </div>
           </div>
           <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4 text-center transition-colors duration-200 hover:shadow-md animate-fade-in">
@@ -239,20 +333,14 @@ const DailyKhata: React.FC = () => {
             <div className="text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-medium transition-colors duration-200">Net Profit</div>
             <div className="text-base sm:text-xl font-bold text-purple-700 dark:text-purple-300 transition-colors duration-200">
               {formatCurrency(
-                (totals.cashAmount + totals.onlineReceived) - 
-                (totals.vendorAmount + totals.expenses + totals.usedCash + totals.onlineUsed) - 
-                (totals.rahulAmount + totals.sagarAmount)
+                totals.totalSale - 
+                (totals.expenses + totals.usedCash + totals.onlineUsed) - 
+                totals.vendorAmount
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Export/Import Component */}
-      <ExportImport 
-        transactions={transactions}
-        onImport={handleImport}
-      />
 
       {/* Modal Form */}
       <TransactionForm

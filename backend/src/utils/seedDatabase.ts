@@ -15,8 +15,8 @@ async function seedDatabase() {
         role: UserRole.ADMIN
       },
       {
-        username: 'cosmetic_user',
-        password: 'cosmetic123',
+        username: 'cosmetic',
+        password: 'sagarrahul',
         businessType: BusinessType.COSMETIC,
         role: UserRole.USER
       },
@@ -27,8 +27,8 @@ async function seedDatabase() {
         role: UserRole.ADMIN
       },
       {
-        username: 'clothing_user',
-        password: 'clothing123',
+        username: 'kapada',
+        password: 'sagarrahul',
         businessType: BusinessType.CLOTHING,
         role: UserRole.USER
       }

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Transaction, SortConfig } from '../types';
 import { formatCurrency, formatDate, getDayName, calculateDailySale } from '../utils/calculations';
-import { Edit2, Trash2, ArrowUpDown, Plus, ArrowUp, ArrowDown, Search, Loader2 } from 'lucide-react';
+import { Edit2, Trash2, ArrowUpDown, Plus, ArrowUp, ArrowDown, Search, Loader2, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface TransactionTableProps {
   transactions: Transaction[];
@@ -9,6 +9,8 @@ interface TransactionTableProps {
   onSort: (field: keyof Transaction) => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (id: string) => void;
+  onBulkDelete?: (ids: string[]) => void;
+  onBulkExport?: (transactions: Transaction[]) => void;
   onAddNew: () => void;
   isLoading?: boolean;
 }
@@ -19,11 +21,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   onSort,
   onEdit,
   onDelete,
+  onBulkDelete,
+  onBulkExport,
   onAddNew,
   isLoading = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
 
   const columns = [
     { field: 'date' as keyof Transaction, label: 'Date', width: 'min-w-[90px] w-[10%]' },
@@ -37,30 +43,41 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     { field: 'onlineUsed' as keyof Transaction, label: 'Online Out', width: 'min-w-[80px] w-[9%]' },
   ];
 
-
-
   // Filter transactions based on search term
-  const filteredTransactions = transactions.filter(transaction => {
-    if (!searchTerm) return true;
-    
-    const searchLower = searchTerm.toLowerCase();
-    const date = formatDate(transaction.date);
-    const day = getDayName(transaction.date);
-    
-    return (
-      date.toLowerCase().includes(searchLower) ||
-      day.toLowerCase().includes(searchLower) ||
-      transaction.cashAmount.toString().includes(searchTerm) ||
-      transaction.onlineReceived.toString().includes(searchTerm) ||
-      transaction.vendorAmount.toString().includes(searchTerm) ||
-      transaction.expenses.toString().includes(searchTerm) ||
-      transaction.rahulAmount.toString().includes(searchTerm) ||
-      transaction.sagarAmount.toString().includes(searchTerm) ||
-      transaction.usedCash.toString().includes(searchTerm) ||
-      transaction.onlineUsed.toString().includes(searchTerm) ||
-      calculateDailySale(transaction).toString().includes(searchTerm)
-    );
-  });
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(transaction => {
+      if (!searchTerm) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      const date = formatDate(transaction.date);
+      const day = getDayName(transaction.date);
+      
+      return (
+        date.toLowerCase().includes(searchLower) ||
+        day.toLowerCase().includes(searchLower) ||
+        transaction.cashAmount.toString().includes(searchTerm) ||
+        transaction.onlineReceived.toString().includes(searchTerm) ||
+        transaction.vendorAmount.toString().includes(searchTerm) ||
+        transaction.expenses.toString().includes(searchTerm) ||
+        transaction.rahulAmount.toString().includes(searchTerm) ||
+        transaction.sagarAmount.toString().includes(searchTerm) ||
+        transaction.usedCash.toString().includes(searchTerm) ||
+        transaction.onlineUsed.toString().includes(searchTerm) ||
+        calculateDailySale(transaction).toString().includes(searchTerm)
+      );
+    });
+  }, [transactions, searchTerm]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+  // Reset to first page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, itemsPerPage]);
 
   const calculateTotals = () => {
     return filteredTransactions.reduce(
@@ -90,6 +107,58 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   const totals = calculateTotals();
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTransactions(currentTransactions.map(t => t.id));
+    } else {
+      setSelectedTransactions([]);
+    }
+  };
+
+  const handleSelectTransaction = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedTransactions(prev => [...prev, id]);
+    } else {
+      setSelectedTransactions(prev => prev.filter(selectedId => selectedId !== id));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedTransactions.length === 0) return;
+    
+    const confirmMessage = `Are you sure you want to delete ${selectedTransactions.length} selected transaction(s)? This action cannot be undone.`;
+    if (window.confirm(confirmMessage)) {
+      if (onBulkDelete) {
+        onBulkDelete(selectedTransactions);
+        setSelectedTransactions([]);
+      }
+    }
+  };
+
+  const handleBulkExport = () => {
+    if (selectedTransactions.length === 0) return;
+    
+    const selectedTransactionObjects = transactions.filter(t => selectedTransactions.includes(t.id));
+    if (onBulkExport) {
+      onBulkExport(selectedTransactionObjects);
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedTransactions([]);
+  };
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const goToFirstPage = () => goToPage(1);
+  const goToLastPage = () => goToPage(totalPages);
+  const goToPreviousPage = () => goToPage(currentPage - 1);
+  const goToNextPage = () => goToPage(currentPage + 1);
 
   const SortButton = ({ field, children }: { field: keyof Transaction; children: React.ReactNode }) => (
     <button
@@ -124,6 +193,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     onSort('cashAmount' as keyof Transaction);
   };
 
+  const isAllSelected = currentTransactions.length > 0 && selectedTransactions.length === currentTransactions.length;
+  const isSomeSelected = selectedTransactions.length > 0 && selectedTransactions.length < currentTransactions.length;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 animate-fade-in">
       <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
@@ -156,12 +228,84 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Bulk Actions */}
+        {selectedTransactions.length > 0 && (
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                {selectedTransactions.length} transaction(s) selected
+              </span>
+              <button
+                onClick={clearSelection}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Clear selection
+              </button>
+            </div>
+            <div className="flex gap-2">
+              {onBulkExport && (
+                <button
+                  onClick={handleBulkExport}
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+                >
+                  <Download size={14} />
+                  Export Selected
+                </button>
+              )}
+              {onBulkDelete && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm flex items-center gap-1"
+                >
+                  <Trash2 size={14} />
+                  Delete Selected
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pagination and Items Per Page Controls */}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-400">Show:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+            <span className="text-sm text-gray-600 dark:text-gray-400">per page</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <span>
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredTransactions.length)} of {filteredTransactions.length} transactions
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="w-full overflow-x-auto">
         <table className="w-full table-fixed">
           <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 transition-colors duration-200">
             <tr>
+              <th className="min-w-[40px] w-[5%] px-2 sm:px-3 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isSomeSelected;
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:checked:bg-blue-600"
+                />
+              </th>
               {columns.map((column) => (
                 <th key={column.field} className={`${column.width} px-2 sm:px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider transition-colors duration-200`}>
                   <SortButton field={column.field}>
@@ -187,27 +331,10 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-200">
-            {/* Top Totals Row */}
-            <tr className="bg-yellow-50 dark:bg-yellow-900/30 border-b-2 border-yellow-200 dark:border-yellow-800 font-semibold transition-colors duration-200">
-              <td className="px-2 sm:px-3 py-3 text-sm font-bold text-gray-800 dark:text-gray-200 transition-colors duration-200">TOTALS</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-green-600 dark:text-green-400 transition-colors duration-200">{formatCurrency(totals.cashAmount)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-green-600 dark:text-green-400 transition-colors duration-200">{formatCurrency(totals.onlineReceived)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-red-600 dark:text-red-400 transition-colors duration-200">{formatCurrency(totals.vendorAmount)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-red-600 dark:text-red-400 transition-colors duration-200">{formatCurrency(totals.expenses)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-red-600 dark:text-red-400 transition-colors duration-200">{formatCurrency(totals.rahulAmount)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-red-600 dark:text-red-400 transition-colors duration-200">{formatCurrency(totals.sagarAmount)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-red-600 dark:text-red-400 transition-colors duration-200">{formatCurrency(totals.usedCash)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-red-600 dark:text-red-400 transition-colors duration-200">{formatCurrency(totals.onlineUsed)}</td>
-              <td className="px-2 sm:px-3 py-3 text-sm text-blue-600 dark:text-blue-400 font-bold transition-colors duration-200">{formatCurrency(totals.totalSale)}</td>
-              <td className="px-2 sm:px-3 py-3"></td>
-            </tr>
-
-
-
             {/* Loading State */}
             {isLoading ? (
               <tr>
-                <td colSpan={11} className="px-4 py-8 text-center">
+                <td colSpan={12} className="px-4 py-8 text-center">
                   <div className="flex flex-col items-center justify-center">
                     <Loader2 size={36} className="text-blue-500 animate-spin-slow mb-2" />
                     <p className="text-gray-500 dark:text-gray-400 transition-colors duration-200">Loading transactions...</p>
@@ -219,7 +346,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 {/* Empty Search Results */}
                 {filteredTransactions.length === 0 && searchTerm && (
                   <tr>
-                    <td colSpan={11} className="px-4 py-8 text-center">
+                    <td colSpan={12} className="px-4 py-8 text-center">
                       <p className="text-gray-500 dark:text-gray-400 transition-colors duration-200">No transactions found matching "{searchTerm}".</p>
                       <button
                         onClick={() => setSearchTerm('')}
@@ -232,8 +359,16 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 )}
 
                 {/* Transaction Rows */}
-                {filteredTransactions.map((transaction) => (
+                {currentTransactions.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 animate-fade-in">
+                    <td className="px-2 sm:px-3 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedTransactions.includes(transaction.id)}
+                        onChange={(e) => handleSelectTransaction(transaction.id, e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:checked:bg-blue-600"
+                      />
+                    </td>
                     <td className="px-2 sm:px-3 py-3">
                       <div className="flex flex-col">
                         <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors duration-200">{formatDate(transaction.date)}</span>
@@ -277,6 +412,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             {/* Bottom Totals Row */}
             {filteredTransactions.length > 0 && (
               <tr className="bg-yellow-50 dark:bg-yellow-900/30 border-t-2 border-yellow-200 dark:border-yellow-800 font-semibold transition-colors duration-200">
+                <td className="px-2 sm:px-3 py-3"></td>
                 <td className="px-2 sm:px-3 py-3 text-sm font-bold text-gray-800 dark:text-gray-200 transition-colors duration-200">TOTALS</td>
                 <td className="px-2 sm:px-3 py-3 text-sm text-green-600 dark:text-green-400 transition-colors duration-200">{formatCurrency(totals.cashAmount)}</td>
                 <td className="px-2 sm:px-3 py-3 text-sm text-green-600 dark:text-green-400 transition-colors duration-200">{formatCurrency(totals.onlineReceived)}</td>
@@ -293,6 +429,55 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goToFirstPage}
+              disabled={currentPage === 1}
+              className="p-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+              title="First page"
+            >
+              <ChevronsLeft size={16} />
+            </button>
+            <button
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              className="p-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+              title="Previous page"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Page {currentPage} of {totalPages}
+            </span>
+            
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className="p-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+              title="Next page"
+            >
+              <ChevronRight size={16} />
+            </button>
+            <button
+              onClick={goToLastPage}
+              disabled={currentPage === totalPages}
+              className="p-1 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+              title="Last page"
+            >
+              <ChevronsRight size={16} />
+            </button>
+          </div>
+          
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Total: {filteredTransactions.length} transactions
+          </div>
+        </div>
+      )}
 
       {!isLoading && filteredTransactions.length === 0 && !searchTerm && (
         <div className="text-center py-12">

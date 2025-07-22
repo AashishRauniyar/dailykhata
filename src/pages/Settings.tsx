@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
-import { Settings, Download, Upload, Trash2, AlertTriangle, Moon, Sun } from 'lucide-react';
+import { Settings, Trash2, AlertTriangle, Moon, Sun } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { transactions } = useTransactions();
@@ -22,34 +22,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const exportData = () => {
-    const dataStr = JSON.stringify(transactions, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `khata-book-backup-${new Date().toISOString().split('T')[0]}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
 
-  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importedData = JSON.parse(e.target?.result as string);
-        localStorage.setItem('khata-book-transactions', JSON.stringify(importedData));
-        alert('Data imported successfully! Please refresh the page.');
-      } catch (error) {
-        alert('Error importing data. Please check the file format.');
-      }
-    };
-    reader.readAsText(file);
-  };
 
   const clearAllData = () => {
     localStorage.removeItem('khata-book-transactions');
@@ -93,37 +66,6 @@ const SettingsPage: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 transition-colors duration-200">Data Management</h3>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg transition-colors duration-200">
-                <div>
-                  <h4 className="font-medium text-green-800 dark:text-green-300 transition-colors duration-200">Export Data</h4>
-                  <p className="text-sm text-green-600 dark:text-green-400 transition-colors duration-200">Download your transaction data as JSON backup</p>
-                </div>
-                <button
-                  onClick={exportData}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-                >
-                  <Download size={18} />
-                  Export
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors duration-200">
-                <div>
-                  <h4 className="font-medium text-blue-800 dark:text-blue-300 transition-colors duration-200">Import Data</h4>
-                  <p className="text-sm text-blue-600 dark:text-blue-400 transition-colors duration-200">Restore transaction data from JSON backup</p>
-                </div>
-                <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2 cursor-pointer">
-                  <Upload size={18} />
-                  Import
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={importData}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
               <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg transition-colors duration-200">
                 <div>
                   <h4 className="font-medium text-red-800 dark:text-red-300 transition-colors duration-200">Clear All Data</h4>
@@ -136,6 +78,12 @@ const SettingsPage: React.FC = () => {
                   <Trash2 size={18} />
                   Clear All
                 </button>
+              </div>
+              
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors duration-200">
+                <p className="text-sm text-blue-700 dark:text-blue-300 transition-colors duration-200">
+                  <strong>Note:</strong> For data export and import functionality, please use the Export & Import section available in the Daily Khata page.
+                </p>
               </div>
             </div>
           </div>

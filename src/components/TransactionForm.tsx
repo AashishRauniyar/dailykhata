@@ -226,8 +226,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                   Income Sources
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderInputField('cashAmount', 'Cash Received (₹)', formData.cashAmount, 'text-green-700 dark:text-green-400')}
-                  {renderInputField('onlineReceived', 'Online Received (₹)', formData.onlineReceived, 'text-green-700 dark:text-green-400')}
+                  {renderInputField('cashAmount', 'Cash In (₹)', formData.cashAmount, 'text-green-700 dark:text-green-400')}
+                  {renderInputField('onlineReceived', 'Online In (₹)', formData.onlineReceived, 'text-green-700 dark:text-green-400')}
                 </div>
                 <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
                   <div className="text-sm text-green-700 dark:text-green-300">
