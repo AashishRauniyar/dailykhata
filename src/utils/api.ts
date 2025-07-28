@@ -1,7 +1,32 @@
 import axios from 'axios';
 import { Transaction, LoginCredentials, RegisterData, User } from '../types';
+import '../types/config';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Simple subdomain convention for backend URL
+const getBackendUrl = () => {
+  // Runtime config takes priority
+  if (window.APP_CONFIG?.API_URL) {
+    return window.APP_CONFIG.API_URL;
+  }
+  
+  // Build-time env var
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Auto-detect based on current domain
+  const currentDomain = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  if (currentDomain === 'localhost' || currentDomain === '127.0.0.1') {
+    return 'http://localhost:3001/api';
+  }
+  
+  // Use api subdomain convention
+  return `${protocol}//api.${currentDomain.replace('www.', '')}`;
+};
+
+const API_BASE_URL = getBackendUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
