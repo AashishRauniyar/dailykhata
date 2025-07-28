@@ -7,10 +7,10 @@ services:
     container_name: financial-tracker-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: financial_tracker
-      MYSQL_USER: financial_user
-      MYSQL_PASSWORD: financial_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-financial_tracker}
+      MYSQL_USER: ${MYSQL_USER:-financial_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-financial_password}
     ports:
       - "3306:3306"
     volumes:
@@ -27,8 +27,8 @@ services:
     container_name: financial-tracker-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: "mysql://financial_user:financial_password@mysql:3306/financial_tracker"
-      JWT_SECRET: "your-super-secret-jwt-key-change-in-production-make-it-very-long-and-random"
+      DATABASE_URL: "mysql://${MYSQL_USER:-financial_user}:${MYSQL_PASSWORD:-financial_password}@mysql:3306/${MYSQL_DATABASE:-financial_tracker}"
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production-make-it-very-long-and-random}
       NODE_ENV: production
       PORT: 3001
       FRONTEND_URL: "http://localhost:3000"

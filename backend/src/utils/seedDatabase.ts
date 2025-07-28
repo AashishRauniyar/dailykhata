@@ -6,29 +6,29 @@ async function seedDatabase() {
   try {
     console.log('🌱 Starting database seeding...');
 
-    // Create default users for both businesses
+    // Get default user credentials from environment variables
     const defaultUsers = [
       {
-        username: 'cosmetic_admin',
-        password: 'cosmetic123',
+        username: process.env.COSMETIC_ADMIN_USERNAME! ,
+        password: process.env.COSMETIC_ADMIN_PASSWORD! ,
         businessType: BusinessType.COSMETIC,
         role: UserRole.ADMIN
       },
       {
-        username: 'cosmetic',
-        password: 'sagarrahul',
+        username: process.env.COSMETIC_USER_USERNAME! ,
+        password: process.env.COSMETIC_USER_PASSWORD!,
         businessType: BusinessType.COSMETIC,
         role: UserRole.USER
       },
       {
-        username: 'clothing_admin',
-        password: 'clothing123',
+        username: process.env.CLOTHING_ADMIN_USERNAME!,
+        password: process.env.CLOTHING_ADMIN_PASSWORD!,
         businessType: BusinessType.CLOTHING,
         role: UserRole.ADMIN
       },
       {
-        username: 'kapada',
-        password: 'sagarrahul',
+        username: process.env.CLOTHING_USER_USERNAME!,
+        password: process.env.CLOTHING_USER_PASSWORD!,
         businessType: BusinessType.CLOTHING,
         role: UserRole.USER
       }
@@ -64,11 +64,11 @@ async function seedDatabase() {
     console.log('\n📋 Default Login Credentials:');
     console.log('═'.repeat(50));
     console.log('COSMETIC BUSINESS:');
-    console.log('  Admin: cosmetic_admin / cosmetic123');
-    console.log('  User:  cosmetic_user / cosmetic123');
+    console.log(`  Admin: ${process.env.COSMETIC_ADMIN_USERNAME || 'cosmetic_admin'} / ${process.env.COSMETIC_ADMIN_PASSWORD ? '***' : 'cosmetic123'}`);
+    console.log(`  User:  ${process.env.COSMETIC_USER_USERNAME || 'cosmetic'} / ${process.env.COSMETIC_USER_PASSWORD ? '***' : 'sagarrahul'}`);
     console.log('\nCLOTHING BUSINESS:');
-    console.log('  Admin: clothing_admin / clothing123');
-    console.log('  User:  clothing_user / clothing123');
+    console.log(`  Admin: ${process.env.CLOTHING_ADMIN_USERNAME || 'clothing_admin'} / ${process.env.CLOTHING_ADMIN_PASSWORD ? '***' : 'clothing123'}`);
+    console.log(`  User:  ${process.env.CLOTHING_USER_USERNAME || 'kapada'} / ${process.env.CLOTHING_USER_PASSWORD ? '***' : 'sagarrahul'}`);
     console.log('═'.repeat(50));
 
   } catch (error) {
