@@ -13,14 +13,23 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: [
+    'https://www.rahulsagar.online',
+    'https://rahulsagar.online',
+    'http://localhost:5173', // For local development
+    'http://localhost:3000'  // For local development
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 
 // Routes
 app.get('/api/health', (req, res) => {
